@@ -21,7 +21,7 @@ LocalSession = sessionmaker(bind=eng, class_=AsyncSession, expire_on_commit=Fals
 
 #Function to setup database based on whether or not it already exists
 
-async def setup_database():
+async def setDataBase():
     adminConnection = await asyncpg.connect(user=DB_USERNAME, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT, database="postgres")
     try:
         exists = await adminConnection.fetchval("SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname=$1)", DB_NAME)
