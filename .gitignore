@@ -1,0 +1,13 @@
+# macOS files
+.DS_Store
+
+# env file
+.env
+
+# server files
+/db-init
+__pycache__/
+
+# Windows files
+Thumbs.db
+desktop.ini
