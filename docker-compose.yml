@@ -1,11 +1,11 @@
 services:
-
-  # postgresql service
+#Database configuration
   db:
     image: postgres:latest
     restart: always
     env_file:
       - .env
+    #Environment variables for database setup
     environment:
       POSTGRES_USER: ${PGSQL_USER}
       POSTGRES_PASSWORD: ${PGSQL_PASSWORD}
@@ -13,20 +13,19 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./db-init:/docker-entrypoint-initdb.d
+    #Database port
     ports:
-      # expose default postgresql port
       - "${DB_PORT}:5432"
+    #Health check configuration to ensure the database is running  
     healthcheck:
-      # verify if postgresql is ready
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${PGSQL_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    
+    #Attach the service to a custom network
     networks:
-      # connect container to 'ssh-network'
-      - ssh-network
-
-  # app server
+      - studentsmarthomenet
   server:
     build: .
     restart: always
@@ -40,16 +39,15 @@ services:
       DATABASE_NAME: ${DB_NAME}
       SERVER_PORT: ${APP_SERVER_PORT}
     depends_on:
-      # ensure 'db' service is healthy
       db:
         condition: service_healthy
     ports:
-      # expose server's port to host
       - "${APP_SERVER_PORT}:8000"
     networks:
-      # connect container to 'ssh-network'
-      - ssh-network
+      - studentsmarthomenet
 
-# define named volumes
 volumes:
   db_data:
+networks:
+  studentsmarthomenet:
+    driver: bridge
