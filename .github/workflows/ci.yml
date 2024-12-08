@@ -1,0 +1,65 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci-cd:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone Repository Code
+        uses: actions/checkout@v3
+
+      - name: Configure Python Environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Upgrade Pip and Install Project Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r server/requirements.txt
+
+      - name: Create Python Virtual Environment
+        run: |
+          python -m venv venv
+
+      - name: Clear Local Pip Cache
+        run: |
+          rm -rf ~/.cache/pip
+
+      - name: Install Dependencies in Virtual Environment
+        run: |
+          source venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r server/requirements.txt
+
+      - name: Initialize Database Schema
+        run: |
+          source venv/bin/activate
+          PYTHONPATH=$(pwd) python -m server.database -c "import asyncio; asyncio.run(create_database())"
+        env:
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_HOST: postgres
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_PORT: 5432
+          
+      - name: Prepare Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Authenticate with Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and Publish Docker Image
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: ${{ secrets.DOCKER_USER }}/SSH-PROTOTYPE:latest
