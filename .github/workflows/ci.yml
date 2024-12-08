@@ -62,4 +62,4 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ${{ secrets.DOCKER_USER }}/SSH-PROTOTYPE:latest
+          tags: ${{ secrets.DOCKER_USER }}/ssh-prototype:latest
