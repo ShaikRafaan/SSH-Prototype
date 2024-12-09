@@ -2,7 +2,7 @@ import pytest
 import asyncpg
 import os
 
-@pytest.mark.asynchronous
+@pytest.mark.asyncio
 async def test_database_connection():
     """
     Test if the application can connect to the database.
