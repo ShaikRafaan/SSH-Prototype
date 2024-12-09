@@ -1,6 +1,7 @@
     fastapi
     pydantic
     pytest
+    pytest-asyncio
     Faker
     python-dotenv
     python-multipart
