@@ -1,10 +1,10 @@
-fastapi
-pydantic
-pytest
-Faker
-python-dotenv
-python-multipart
-asyncpg
-sqlalchemy[asyncio]
-sqlalchemy-utils
-uvicorn
+    fastapi
+    pydantic
+    pytest
+    Faker
+    python-dotenv
+    python-multipart
+    asyncpg
+    sqlalchemy[asyncio]
+    sqlalchemy-utils
+    uvicorn
