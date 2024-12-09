@@ -30,3 +30,10 @@ class OrderResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+class OrderUpdate(BaseModel):
+    customer_name: str
+    total_amount: float
+
+    class Config:
+        orm_mode = True
