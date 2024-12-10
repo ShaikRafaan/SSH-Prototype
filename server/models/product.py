@@ -5,7 +5,7 @@ from server.models.base_case import  base_case as Base
 class Product(Base):
     __tablename__ = "products"
     id = Column(Integer, primary_key=True,unique=True)
-    name = Column(String, index=True,unique=True)
+    name = Column(String(20), index=True,unique=True)
     price = Column(Float)
     in_stock = Column(Boolean, default=True)
     supermarket_id = Column(Integer, ForeignKey("supermarkets.id"))
