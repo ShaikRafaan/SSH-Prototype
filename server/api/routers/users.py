@@ -5,12 +5,12 @@ from sqlalchemy.future import select
 from typing import List
 from server.schemas.users import UserCreate, UserRead, UserUpdate
 from server.models.users import User
-from server.dependencies import f_database_session
+from server.dependencies import get_db
 
 router = APIRouter()
 
 @router.post("/", response_model=UserRead)
-async def create_user(user: UserCreate, db: AsyncSession = Depends(f_database_session)):
+async def create_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
     new_user = User(**user.dict())
     db.add(new_user)
     await db.commit()
@@ -27,14 +27,14 @@ async def create_user(user: UserCreate, db: AsyncSession = Depends(f_database_se
 
 
 @router.get("/", response_model=List[UserRead])
-async def list_users(db: AsyncSession = Depends(f_database_session)):
+async def list_users(db: AsyncSession = Depends(get_db)):
     """result = await db.execute(select(User))
     users = result.scalars().all()
     return users"""
     return
 
 @router.get("/{user_id}", response_model=UserRead)
-async def get_user(user_id: int, db: AsyncSession = Depends(f_database_session)):
+async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
     """result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
@@ -43,7 +43,7 @@ async def get_user(user_id: int, db: AsyncSession = Depends(f_database_session))
     return
 
 @router.put("/{user_id}", response_model=UserRead)
-async def update_user(user_id: int, user_update: UserUpdate, db: AsyncSession = Depends(f_database_session)):
+async def update_user(user_id: int, user_update: UserUpdate, db: AsyncSession = Depends(get_db)):
     """result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
@@ -56,7 +56,7 @@ async def update_user(user_id: int, user_update: UserUpdate, db: AsyncSession = 
     return
 
 @router.delete("/{user_id}", response_model=dict)
-async def delete_user(user_id: int, db: AsyncSession = Depends(f_database_session)):
+async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)):
     """result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
