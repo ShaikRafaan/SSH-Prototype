@@ -8,7 +8,7 @@ class Product(Base):
     product_name = Column(String(20), index=True,unique=True)
     price = Column(Float)
     in_stock = Column(Boolean, default=True)
-    supermarket_id = Column(Integer, ForeignKey("supermarkets.id"))
+    supermarket_id = Column(Integer, ForeignKey("supermarket.id"))
 
     supermarket = relationship("Supermarket", back_populates="products")
 
