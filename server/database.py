@@ -96,3 +96,14 @@ async def populate_accommodations():
         await session.commit()
         print("Accommodations table populated.")
 
+async def populate_all():
+    print("Populating all tables with hardcoded data...")
+    await populate_supermarkets()
+    await populate_products()
+    await populate_users()
+    await populate_accommodations()
+    print("All tables populated successfully.")
+
+async def main():
+    await setDataBase()
+    await populate_all()
