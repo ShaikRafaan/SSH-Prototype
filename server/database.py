@@ -1,6 +1,8 @@
 import os
 import asyncpg
 from .models.base_case import base_case
+from .models.users import User, hardcoded_users
+from .models.accommodations import Accommodation, hardcoded_accommodations
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -35,3 +37,33 @@ async def setDataBase():
 
     async with eng.begin() as connection:
         await connection.run_sync(base_case.metadata.create_all)
+
+async def populate_users():
+    async with LocalSession() as session:
+        async with session.begin():
+            for data in hardcoded_users:
+                user = User(
+                    id=data["id"],
+                    first_name=data["first_name"],
+                    second_name=data["second_name"],
+                    email=data["email"],
+                    password=data["password"],
+                    accommodation_id=data["accommodation_id"]
+                )
+                session.add(user)
+        await session.commit()
+        print("Users table populated.")
+
+async def populate_accommodations():
+    async with LocalSession() as session:
+        async with session.begin():
+            for data in hardcoded_accommodations:
+                accommodation = Accommodation(
+                    accommodation_id=data["accommodation_id"],
+                    address=data["address"],
+                    city=data["city"],
+                    contact_number=data["contact_number"]
+                )
+                session.add(accommodation)
+        await session.commit()
+        print("Accommodations table populated.")
