@@ -3,13 +3,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from server.schemas.accommodations import AccommodationUpdate, AccommodationResponse
 from server.models.accommodations import Accommodation
-from server.dependencies import f_database_session
+from server.dependencies import get_db
 
 router = APIRouter(prefix="/accommodations", tags=["Accommodations"])
 
 @router.post("/", response_model=AccommodationResponse)
 async def create_accommodation(
-    accommodation: AccommodationResponse, db: AsyncSession = Depends(f_database_session)
+    accommodation: AccommodationResponse, db: AsyncSession = Depends(get_db)
 ):
     new_accommodation = Accommodation(**accommodation.dict())
     db.add(new_accommodation)
@@ -24,7 +24,7 @@ async def create_accommodation(
 
 @router.get("/{accommodation_id}", response_model=AccommodationResponse)
 async def get_accommodation(
-    accommodation_id: int, db: AsyncSession = Depends(f_database_session)
+    accommodation_id: int, db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(Accommodation).where(Accommodation.id == accommodation_id))
     accommodation = result.scalars().first()
@@ -38,7 +38,7 @@ async def get_accommodation(
     )"""
 
 @router.get("/", response_model=list[AccommodationResponse])
-async def list_accommodations(db: AsyncSession = Depends(f_database_session)):
+async def list_accommodations(db: AsyncSession = Depends(get_db)):
    result = await db.execute(select(Accommodation))
    accommodations = result.scalars().all()
    return accommodations
@@ -52,7 +52,7 @@ async def list_accommodations(db: AsyncSession = Depends(f_database_session)):
 async def update_accommodation(
     accommodation_id: int, 
     updated_data: AccommodationUpdate, 
-    db: AsyncSession = Depends(f_database_session),
+    db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Accommodation).where(Accommodation.id == accommodation_id))
     accommodation = result.scalars().first()
@@ -74,7 +74,7 @@ async def update_accommodation(
 
 @router.delete("/{accommodation_id}", response_model=dict)
 async def delete_accommodation(
-    accommodation_id: int, db: AsyncSession = Depends(f_database_session)
+    accommodation_id: int, db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(Accommodation).where(Accommodation.id == accommodation_id))
     accommodation = result.scalars().first()
