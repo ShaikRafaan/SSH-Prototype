@@ -5,7 +5,7 @@ from server.schemas.accommodations import AccommodationUpdate, AccommodationResp
 from server.models.accommodations import Accommodation
 from server.dependencies import get_db
 
-router = APIRouter(prefix="/accommodations", tags=["Accommodations"])
+router = APIRouter()
 
 @router.post("/", response_model=AccommodationResponse)
 async def create_accommodation(
