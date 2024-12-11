@@ -9,7 +9,7 @@ class User(Base):
     second_name = Column(String(20), nullable=False, unique=False)
     email = Column(String(30), unique=True, nullable=False)
     password = Column(String(20), nullable=False)
-    accommodation_id = Column(String(15), ForeignKey("accommodations.accommodation_id"), nullable=False)
+    accommodation_id = Column(Integer, ForeignKey("accommodations.accommodation_id"), nullable=False)
 
 
 hardcoded_users = [
@@ -19,7 +19,7 @@ hardcoded_users = [
         "second_name": "Doe",
         "email": "john.doe@example.com",
         "password": "password123",
-        "accommodation_id": "ACC001"
+        "accommodation_id": 1
     },
     {
         "id": 2,
@@ -27,7 +27,7 @@ hardcoded_users = [
         "second_name": "Smith",
         "email": "jane.smith@example.com",
         "password": "securepass456",
-        "accommodation_id": "ACC002"
+        "accommodation_id": 2
     },
     {
         "id": 3,
@@ -35,7 +35,7 @@ hardcoded_users = [
         "second_name": "Johnson",
         "email": "alice.johnson@example.com",
         "password": "mypassword789",
-        "accommodation_id": "ACC003"
+        "accommodation_id": 3
     },
     {
         "id": 4,
@@ -43,14 +43,14 @@ hardcoded_users = [
         "second_name": "Brown",
         "email": "bob.brown@example.com",
         "password": "password321",
-        "accommodation_id": "ACC004"
+        "accommodation_id": 4
     },
     {"id": 5,
         "first_name": "Charlie",
         "second_name": "Davis",
         "email": "charlie.davis@example.com",
         "password": "passcharlie5",
-        "accommodation_id": "ACC005"
+        "accommodation_id": 5
     },
     {
         "id": 6,
@@ -58,7 +58,7 @@ hardcoded_users = [
         "second_name": "Evans",
         "email": "emily.evans@example.com",
         "password": "emily456pass",
-        "accommodation_id": "ACC006"
+        "accommodation_id": 6
     },
     {
         "id": 7,
@@ -66,7 +66,7 @@ hardcoded_users = [
         "second_name": "Green",
         "email": "frank.green@example.com",
         "password": "frank789",
-        "accommodation_id": "ACC007"
+        "accommodation_id": 7
     },
     {
         "id": 8,
@@ -74,7 +74,7 @@ hardcoded_users = [
         "second_name": "Harris",
         "email": "grace.harris@example.com",
         "password": "gracepass123",
-        "accommodation_id": "ACC008"
+        "accommodation_id": 8
     },
     {
         "id": 9,
@@ -82,7 +82,7 @@ hardcoded_users = [
         "second_name": "Irwin",
         "email": "henry.irwin@example.com",
         "password": "henrypass321",
-        "accommodation_id": "ACC009"
+        "accommodation_id": 9
     },
     {
         "id": 10,
@@ -90,6 +90,6 @@ hardcoded_users = [
         "second_name": "Jackson",
         "email": "isabel.jackson@example.com",
         "password": "isabel789",
-        "accommodation_id": "ACC010"
+        "accommodation_id": 10
     }
 ]
