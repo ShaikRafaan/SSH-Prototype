@@ -11,8 +11,9 @@ router = APIRouter()
 @router.get("/list", response_model=ProductSchema)
 async def list_products()->ProductSchema:
     return ProductSchema(
-        id="12343",
-        supermarket_id="32432542"
+        id=12343,
+        name="poptart",
+        price=89
     )
 '''
 @router.get("/search", response_model=list[ProductSchema])
