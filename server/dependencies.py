@@ -1,6 +1,5 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from .database import LocalSession
 #Fetch a new database session for asynchronus database operations
-async def get_db():
+async def f_database_session():
     async with LocalSession() as database_session:
         yield database_session
