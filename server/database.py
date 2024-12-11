@@ -1,6 +1,8 @@
 import os
 import asyncpg
 from .models.base_case import base_case
+from .models.product import Product, hardcoded_products
+from .models.supermarket import Supermarket, hardcoded_supermarkets
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -35,3 +37,31 @@ async def setDataBase():
 
     async with eng.begin() as connection:
         await connection.run_sync(base_case.metadata.create_all)
+
+async def populate_supermarkets():
+    async with LocalSession() as session:
+        async with session.begin():
+            for data in hardcoded_supermarkets:
+                supermarket = Supermarket(
+                    supermarket_id=data["supermarket_id"],
+                    supermarket_name=data["supermarket_name"],
+                    location=data["location"]
+                )
+                session.add(supermarket)
+        await session.commit()
+        print("Supermarkets table populated.")
+    
+async def populate_products():
+    async with LocalSession() as session:
+        async with session.begin():
+            for data in hardcoded_products:
+                product = Product(
+                    id=data["id"],
+                    product_name=data["product_name"],
+                    price=data["price"],
+                    in_stock=data["in_stock"],
+                    supermarket_id=data["supermarket_id"]
+                )
+                session.add(product)
+        await session.commit()
+        print("Products table populated.")
