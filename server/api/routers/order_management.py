@@ -4,13 +4,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from server.models.order_management import Order, OrderItem
 from server.schemas.order_management import OrderCreate, OrderResponse, OrderItemResponse ,OrderUpdate
-from server.dependencies import f_database_session
+from server.dependencies import get_db
 from sqlalchemy.future import select
 
 router = APIRouter()
 
 @router.post("/create", response_model=OrderResponse)
-async def create_order(order: OrderCreate, db: AsyncSession = Depends(f_database_session)):
+async def create_order(order: OrderCreate, db: AsyncSession = Depends(get_db)):
     new_order = Order(customer_name=order.customer_name, total_amount=order.total_amount)
     db.add(new_order)
 
@@ -44,7 +44,7 @@ async def create_order(order: OrderCreate, db: AsyncSession = Depends(f_database
     )'''
 
 @router.get("/{order_id}", response_model=OrderResponse)
-async def get_order(order_id: int, db: AsyncSession = Depends(f_database_session)):
+async def get_order(order_id: int, db: AsyncSession = Depends(get_db)):
 
     order = await db.get(Order, order_id)
     if not order:
@@ -73,7 +73,7 @@ async def get_order(order_id: int, db: AsyncSession = Depends(f_database_session
    )'''
 
 @router.get("/list", response_model=List[OrderResponse])
-async def list_orders(db: AsyncSession = Depends(f_database_session)):
+async def list_orders(db: AsyncSession = Depends(get_db)):
 
    result = await db.execute(select(Order))
    orders = result.scalars().all()
@@ -100,7 +100,7 @@ async def list_orders(db: AsyncSession = Depends(f_database_session)):
     )'''
 
 @router.put("/update/{order_id}", response_model=OrderResponse)
-async def update_order(order_id: int, order_update: OrderUpdate, db: AsyncSession = Depends(f_database_session)):
+async def update_order(order_id: int, order_update: OrderUpdate, db: AsyncSession = Depends(get_db)):
     stmt = (
         update(Order)
         .where(Order.id == order_id)
@@ -116,7 +116,7 @@ async def update_order(order_id: int, order_update: OrderUpdate, db: AsyncSessio
     return updated_order
 
 @router.delete("/delete/{order_id}", response_model=dict)
-async def delete_order(order_id: int, db: AsyncSession = Depends(f_database_session)):
+async def delete_order(order_id: int, db: AsyncSession = Depends(get_db)):
     stmt = delete(Order).where(Order.id == order_id)
     result = await db.execute(stmt)
     if result.rowcount == 0:
