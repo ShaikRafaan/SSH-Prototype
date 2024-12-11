@@ -23,7 +23,7 @@ class OrderItemResponse(BaseModel):
         orm_mode = True
 
 class OrderResponse(BaseModel):
-    id: int
+    id: str
     customer_name: str
     total_amount: float
     items: List[OrderItemResponse]

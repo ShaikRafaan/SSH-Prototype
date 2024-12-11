@@ -1,126 +1,72 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import delete, update
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
-from server.models.order_management import Order, OrderItem
-from server.schemas.order_management import OrderCreate, OrderResponse, OrderItemResponse ,OrderUpdate
-from server.dependencies import get_db
 from sqlalchemy.future import select
+from server.models.order_management import Order
+from server.schemas.order_management import OrderResponse as OrderSchema
+from server.schemas.order_management import OrderItemResponse
+from server.dependencies import get_db
 
 router = APIRouter()
 
-@router.post("/create", response_model=OrderResponse)
-async def create_order(order: OrderCreate, db: AsyncSession = Depends(get_db)):
-    new_order = Order(customer_name=order.customer_name, total_amount=order.total_amount)
-    db.add(new_order)
+@router.get("/list", response_model=OrderSchema)
+async def list_order_management() -> OrderSchema:    
+    return OrderSchema(
+        id="12345",
+        customer_name="Alice",
+        total_amount= 150.50,
+        items= [OrderItemResponse (id= "12345",
+                product_name="Laptop",
+                quantity= 1,
+                price= 150.50
+                )]
 
-    for item in order.items:
-        order_item = OrderItem(order_id=new_order.id, product_name=item.product_name, quantity=item.quantity, price=item.price)
-        db.add(order_item)
-
-    await db.commit()
-    await db.refresh(new_order)
-
-    return new_order
-'''
-   test
-   return OrderResponse(
-       id="123",
-       customer_name ="John",
-       total_amount= "100.4",
-       items=[
-           OrderItemResponse(
-                   product_name="Water",
-                   quantity="1",
-                   price="50.2",
-           ),
-           OrderItemResponse(
-                   product_name="Milk",
-                   quantity="1",
-                   price="50.2",
-           )
-       ]
-
-    )'''
-
-@router.get("/{order_id}", response_model=OrderResponse)
-async def get_order(order_id: int, db: AsyncSession = Depends(get_db)):
-
-    order = await db.get(Order, order_id)
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
-    return order
-'''
-    Test
-      return OrderResponse(
-             id="123",
-       customer_name ="John",
-       total_amount= "100.4",
-       items=[
-           OrderItemResponse(
-                   product_name="Water",
-                   quantity="1",
-                   price="50.2",
-           ),
-           OrderItemResponse(
-                   product_name="Milk",
-                   quantity="1",
-                   price="50.2",
-           )
-       ]
-
-      
-   )'''
-
-@router.get("/list", response_model=List[OrderResponse])
-async def list_orders(db: AsyncSession = Depends(get_db)):
-
-   result = await db.execute(select(Order))
-   orders = result.scalars().all()
-   return orders
-'''
-   TEST
-     return OrderResponse(
-              id="123",
-       customer_name ="John",
-       total_amount= "100.4",
-       items=[
-           OrderItemResponse(
-                   product_name="Water",
-                   quantity="1",
-                   price="50.2",
-           ),
-           OrderItemResponse(
-                   product_name="Milk",
-                   quantity="1",
-                   price="50.2",
-           )
-       ]
-
-    )'''
-
-@router.put("/update/{order_id}", response_model=OrderResponse)
-async def update_order(order_id: int, order_update: OrderUpdate, db: AsyncSession = Depends(get_db)):
-    stmt = (
-        update(Order)
-        .where(Order.id == order_id)
-        .values(customer_name=order_update.customer_name, total_amount=order_update.total_amount)
-        .execution_options(synchronize_session="fetch")
     )
-    result = await db.execute(stmt)
-    if result.rowcount == 0:
-        raise HTTPException(status_code=404, detail="Order not found")
 
-    await db.commit()
-    updated_order = await db.get(Order, order_id)
-    return updated_order
+@router.post("/add", response_model=OrderSchema)
+async def add_order(order: OrderSchema, db: AsyncSession = Depends(get_db)) -> OrderSchema:
+
+    return OrderSchema(
+        id="12345",
+        customer_name="Alice",
+        total_amount= 150.50,
+        items= [OrderItemResponse (id= "12345",
+                product_name="Laptop",
+                quantity= 1,
+                price= 150.50
+                )]
+    )
+
+@router.get("/search/{id}", response_model=list[OrderSchema])
+async def search_products(id: str, db: AsyncSession = Depends(get_db)):
+    if id == "12345":
+        return [OrderSchema(id="12345", customer_name="Alice", total_amount=150.50, items=[OrderItemResponse( id= "12345", product_name="Laptop", quantity= 1, price= 150.50)])]
+    else:
+        return []
 
 @router.delete("/delete/{order_id}", response_model=dict)
-async def delete_order(order_id: int, db: AsyncSession = Depends(get_db)):
-    stmt = delete(Order).where(Order.id == order_id)
-    result = await db.execute(stmt)
-    if result.rowcount == 0:
-        raise HTTPException(status_code=404, detail="Order not found")
+async def delete_order(order_id: str, db: AsyncSession = Depends(get_db)) -> dict:
 
-    await db.commit()
-    return {"detail": "Order deleted successfully"}
+    if order_id == "12345":
+        return {"message": f"order with ID {order_id} has been deleted."}
+    else:
+        return {"message": f"order with ID {order_id} does not exist."}
+
+
+@router.put("/update/{order_id}", response_model=OrderSchema)
+async def update_order(
+    order_id: int,update_data: OrderSchema,db: AsyncSession = Depends(get_db)) -> OrderSchema:
+
+    if order_id == 12345:
+        return OrderSchema(
+            id="12345",
+            customer_name="Alice",
+            total_amount= 150.50,
+            items= [OrderItemResponse (id= "12345", product_name="Laptop", quantity= 1, price= 150.50)]
+    )
+    else:
+        return OrderSchema(
+            id=str(order_id),
+            customer_name="Non-existent order (for testing purposes)",
+            total_amount=0,
+            items= [OrderItemResponse (id= "Non-existent order (for testing purposes)", product_name="Non-existent order (for testing purposes)", quantity= 0, price= 0)]
+    )
