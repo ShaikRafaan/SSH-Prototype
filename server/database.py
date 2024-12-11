@@ -5,6 +5,7 @@ from .models.product import Product, hardcoded_products
 from .models.supermarket import Supermarket, hardcoded_supermarkets
 from .models.users import User, hardcoded_users
 from .models.accommodations import Accommodation, hardcoded_accommodations
+from .models.order_management import Order, OrderItem, hardcoded_orders
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -38,7 +39,9 @@ async def setDataBase():
         await adminConnection.close()
 
     async with eng.begin() as connection:
+        await connection.run_sync(base_case.metadata.drop_all)
         await connection.run_sync(base_case.metadata.create_all)
+
 async def populate_supermarkets():
     async with LocalSession() as session:
         async with session.begin():
@@ -96,12 +99,35 @@ async def populate_accommodations():
         await session.commit()
         print("Accommodations table populated.")
 
+async def populate_orders():
+    async with LocalSession() as session:
+        async with session.begin():
+            for order_data in hardcoded_orders:
+                order = Order(
+                    id=order_data["id"],
+                    customer_name=order_data["customer_name"],
+                    total_amount=order_data["total_amount"]
+                )
+                session.add(order)
+                for item_data in order_data["items"]:
+                    order_item = OrderItem(
+                        id=item_data["id"],
+                        order_id=order_data["id"],
+                        product_name=item_data["product_name"],
+                        quantity=item_data["quantity"],
+                        price=item_data["price"]
+                    )
+                    session.add(order_item)
+        await session.commit()
+        print("Orders and OrderItems tables populated.")
+
 async def populate_all():
     print("Populating all tables with hardcoded data...")
     await populate_supermarkets()
     await populate_products()
     await populate_users()
     await populate_accommodations()
+    await populate_orders()
     print("All tables populated successfully.")
 
 async def main():
