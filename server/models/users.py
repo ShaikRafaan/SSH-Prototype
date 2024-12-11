@@ -5,7 +5,8 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(30), nullable=False)
+    first_name = Column(String(20), nullable=False, unique=False)
+    second_name = Column(String(20), nullable=False, unique=False)
     email = Column(String(30), unique=True, nullable=False)
     password = Column(String(20), nullable=False)
     accommodation_id = Column(String(15), foreign_key=True, nullable=False)
