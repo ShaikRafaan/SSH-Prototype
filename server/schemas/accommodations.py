@@ -7,8 +7,10 @@ class AccommodationUpdate(BaseModel):
     address: str
 
 class AccommodationResponse(BaseModel):
-    id: str
+    id: int
     address: str
+    city: str
+    contact_number: str
 
     class Config:
         orm_mode = True

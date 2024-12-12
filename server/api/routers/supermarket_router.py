@@ -1,105 +1,105 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from server.models.supermarket import Supermarket
-from server.schemas.supermarket_schema import Supermarket as SupermarketSchema
+from server.models import Supermarket as SupermarketModel
+from server.schemas import Supermarket
 from server.dependencies import get_db
+from server.logging_config import setup_logging  
+from typing import List
+from sqlalchemy import delete
+
+logger = setup_logging()
 
 router = APIRouter()
 
-@router.get("/list", response_model=SupermarketSchema)
-#async def list_supermarkets(db: AsyncSession = Depends(get_db)) -> SupermarketSchema:
-async def list_supermarkets() -> SupermarketSchema:    
-    #result = await db.execute(select(Supermarket))
-    #return result.scalars().all()
-    return SupermarketSchema(
-        id="12345",
-        name="Tomato Sauce"
-    )
+@router.get("/list", response_model=List[Supermarket])
+async def list_supermarkets(db: AsyncSession = Depends(get_db)) -> List[Supermarket]:
+    logger.info("Fetching the list of supermarkets...")
+    result = await db.execute(select(SupermarketModel))
+    supermarkets = result.scalars().all()
+    supermarket_list=[
+        Supermarket(
+            id=s.supermarket_id,
+            name=s.supermarket_name,
+            location=s.location
+        )
+        for s in supermarkets
+    ]
+    return supermarket_list
 
-@router.post("/add", response_model=SupermarketSchema)
-#async def search_products(query: str, db: AsyncSession = Depends(get_db)):
-async def add_supermarket(supermarket: SupermarketSchema, db: AsyncSession = Depends(get_db)) -> SupermarketSchema:
-    '''
-    new_supermarket = Supermarket(
-        name=supermarket.name,
-        id=supermarket.id,
+@router.post("/add", response_model=Supermarket)
+async def add_supermarket(supermarket: Supermarket, db: AsyncSession = Depends(get_db)) -> Supermarket:
+    result = await db.execute(select(SupermarketModel).filter_by(id=supermarket.id))
+    existing_supermarket = result.scalars().first()
+    if existing_supermarket:
+        raise HTTPException(
+            status_code=400,
+            detail=f"A supermarket with id '{supermarket.id}' already exists."
+        )
+    new_supermarket = SupermarketModel(
+        supermarket_id=supermarket.id,
+        supermarket_name=supermarket.name,
+        location=supermarket.location
     )
     db.add(new_supermarket)
+    logger.info(f"Adding a new supermarket with ID: {supermarket.id} and Name: {supermarket.name}")
     await db.commit()
-    await db.refresh(new_supermarket)
-    return new_supermarket
-    '''
-    return SupermarketSchema(
-        id="new-id",
-        name="Added Supermarket"
+    await db.refresh(new_supermarket) 
+    return Supermarket(
+        id=new_supermarket.supermarket_id,
+        name=new_supermarket.supermarket_name,
+        location=new_supermarket.location
     )
 
-
-@router.get("/search/{id}", response_model=list[SupermarketSchema])
-async def search_products(id: str, db: AsyncSession = Depends(get_db)):
-    '''
-    query = select(Supermarket).where(Supermarket.id == id)
+@router.get("/search/{id}", response_model=Supermarket)
+async def search_products(id: int, db: AsyncSession = Depends(get_db)):
+    logger.info(f"Searching for supermarket with ID: {id}")
+    query = select(SupermarketModel).where(SupermarketModel.supermarket_id == id)
     result = await db.execute(query)
-    supermarket = result.scalar_one_or_none()
+    query_result = result.scalar_one_or_none()
+    if not query_result:
+        raise HTTPException(status_code=404, detail=f"Supermarket with ID '{id}' not found.")
+    return Supermarket(
+        id=query_result.supermarket_id,
+        name=query_result.supermarket_name,
+        location=query_result.location
+    )
 
-    if not supermarket:
-        raise LookupError("Supermarket not found")
-    return SupermarketSchema.from_orm(supermarket)
-    '''
-    if id == "12345":
-        return [SupermarketSchema(id="12345", name="Tomato Sauce")]
-    else:
-        return []
 
 @router.delete("/delete/{supermarket_id}", response_model=dict)
-async def delete_supermarket(supermarket_id: str, db: AsyncSession = Depends(get_db)) -> dict:
-    '''
+async def delete_supermarket(supermarket_id: int, db: AsyncSession = Depends(get_db)) -> dict:
+    logger.info(f"Attempting to delete supermarket with ID: {supermarket_id}")
     result = await db.execute(
-        select(Supermarket).where(Supermarket.id == supermarket_id)
+        select(SupermarketModel).where(SupermarketModel.supermarket_id == supermarket_id)
+    )
+    supermarket = result.scalar_one_or_none()
+    if not supermarket:
+        raise HTTPException(status_code=404, detail=f"Supermarket with ID '{supermarket_id}' not found.")
+    await db.delete(supermarket)
+    await db.commit()
+    return {"message": f"Supermarket with ID '{supermarket_id}' has been deleted successfully!"}
+
+@router.put("/update/{supermarket_id}", response_model=Supermarket)
+async def update_supermarket(
+    supermarket_id: int, 
+    updated_data: Supermarket, 
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(
+        select(SupermarketModel).where(SupermarketModel.supermarket_id == supermarket_id)
     )
     supermarket = result.scalar_one_or_none()
 
     if not supermarket:
-        raise LookupError("Supermarket not found")
+        raise HTTPException(status_code=404, detail=f"Supermarket with ID '{supermarket_id}' not found.")
 
-    await db.delete(supermarket)
+    supermarket.supermarket_name = updated_data.name
+    supermarket.location = updated_data.location
     await db.commit()
-
-    return {"message": f"Supermarket with ID {supermarket_id} has been deleted."}
-    '''
-    if supermarket_id == "12345":
-        return {"message": f"Supermarket with ID {supermarket_id} has been deleted."}
-    else:
-        return {"message": f"Supermarket with ID {supermarket_id} does not exist."}
-
-
-@router.put("/update/{supermarket_id}", response_model=SupermarketSchema)
-async def update_supermarket(
-    supermarket_id: int,update_data: SupermarketSchema,db: AsyncSession = Depends(get_db)) -> SupermarketSchema:
-    '''
-    result = await db.execute(select(Supermarket).where(Supermarket.id == supermarket_id))
-    supermarket = result.scalar_one_or_none()
-
-    if not supermarket:
-        raise LookupError("Supermarket not found")
-
-    # Update fields
-    for key, value in update_data.dict(exclude_unset=True).items():
-        setattr(supermarket, key, value)
-
-    await db.commit()
+    logger.info(f"Supermarket with ID {supermarket_id} updated successfully.")
     await db.refresh(supermarket)
-
-    return supermarket
-    '''
-    if supermarket_id == 12345:
-        return SupermarketSchema(
-            id="12345",
-            name=update_data.name or "Updated Tomato Sauce"
-        )
-    else:
-        return SupermarketSchema(
-            id=str(supermarket_id),
-            name="Non-existent supermarket (for testing purposes)"
-        )
+    return Supermarket(
+        id=supermarket.supermarket_id,
+        name=supermarket.supermarket_name,
+        location=supermarket.location
+    )

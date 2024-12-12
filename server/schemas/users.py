@@ -3,14 +3,14 @@ from pydantic import BaseModel
 
 class UserCreate(BaseModel):
     firstname: str
-    lastname: str
+    secondname: str
     email: str
     password: str
 
-class UserResponse(BaseModel):
+class UserRead(BaseModel):
     id: str
     firstname: str
-    lastname: str
+    secondname: str
     email: str
 
     class Config:
@@ -19,7 +19,7 @@ class UserResponse(BaseModel):
 
 class UserUpdate(BaseModel):
     firstname: str
-    lastname: str
+    secondname: str
     email: str
     password: str
     
