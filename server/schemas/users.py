@@ -7,7 +7,7 @@ class UserCreate(BaseModel):
     email: str
     password: str
 
-class UserRead(BaseModel):
+class UserResponse(BaseModel):
     id: str
     firstname: str
     lastname: str

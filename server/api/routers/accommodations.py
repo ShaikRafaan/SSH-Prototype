@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from server.schemas.accommodations import AccommodationUpdate, AccommodationResponse,AccommodationCreate
 from server.models.accommodations import Accommodation
+from server.schemas.accommodations import AccommodationResponse as AccommodationSchema
 from server.dependencies import get_db
 
 router = APIRouter()
