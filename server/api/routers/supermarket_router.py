@@ -1,16 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException
-from typing import List
-from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from server.models import Supermarket as SupermarketModel
 from server.schemas import Supermarket
 from server.dependencies import get_db
+from server.logging_config import setup_logging  
+from typing import List
+from sqlalchemy import delete
+
+logger = setup_logging()
 
 router = APIRouter()
 
 @router.get("/list", response_model=List[Supermarket])
 async def list_supermarkets(db: AsyncSession = Depends(get_db)) -> List[Supermarket]:
+    logger.info("Fetching the list of supermarkets...")
     result = await db.execute(select(SupermarketModel))
     supermarkets = result.scalars().all()
     supermarket_list=[
@@ -38,6 +42,7 @@ async def add_supermarket(supermarket: Supermarket, db: AsyncSession = Depends(g
         location=supermarket.location
     )
     db.add(new_supermarket)
+    logger.info(f"Adding a new supermarket with ID: {supermarket.id} and Name: {supermarket.name}")
     await db.commit()
     await db.refresh(new_supermarket) 
     return Supermarket(
@@ -48,6 +53,7 @@ async def add_supermarket(supermarket: Supermarket, db: AsyncSession = Depends(g
 
 @router.get("/search/{id}", response_model=Supermarket)
 async def search_products(id: int, db: AsyncSession = Depends(get_db)):
+    logger.info(f"Searching for supermarket with ID: {id}")
     query = select(SupermarketModel).where(SupermarketModel.supermarket_id == id)
     result = await db.execute(query)
     query_result = result.scalar_one_or_none()
@@ -62,6 +68,7 @@ async def search_products(id: int, db: AsyncSession = Depends(get_db)):
 
 @router.delete("/delete/{supermarket_id}", response_model=dict)
 async def delete_supermarket(supermarket_id: int, db: AsyncSession = Depends(get_db)) -> dict:
+    logger.info(f"Attempting to delete supermarket with ID: {supermarket_id}")
     result = await db.execute(
         select(SupermarketModel).where(SupermarketModel.supermarket_id == supermarket_id)
     )
@@ -89,6 +96,7 @@ async def update_supermarket(
     supermarket.supermarket_name = updated_data.name
     supermarket.location = updated_data.location
     await db.commit()
+    logger.info(f"Supermarket with ID {supermarket_id} updated successfully.")
     await db.refresh(supermarket)
     return Supermarket(
         id=supermarket.supermarket_id,
