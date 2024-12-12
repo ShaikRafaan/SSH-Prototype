@@ -45,42 +45,14 @@ async def add_supermarket(supermarket: Supermarket, db: AsyncSession = Depends(g
         name=new_supermarket.supermarket_name,
         location=new_supermarket.location
     )
-    '''
-    new_supermarket = Supermarket(
-        name=supermarket.name,
-        id=supermarket.id,
-        location=supermarket.location
-    )
-    db.add(new_supermarket)
-    await db.commit()
-    await db.refresh(new_supermarket)
-    return new_supermarket
-    '''
-
 
 @router.get("/search/{id}", response_model=Supermarket)
 async def search_products(id: int, db: AsyncSession = Depends(get_db)):
-    '''
-    query_result = await db.get(SupermarketModel,id)
-    
-    if not query_result:
-        raise HTTPException(status_code=404, detail=f"User with ID '{id}' not found.")
-    
-    return Supermarket(
-            id=query_result.supermarket_id,
-            name=query_result.supermarket_name,
-            location=query_result.location
-        )
-    '''
     query = select(SupermarketModel).where(SupermarketModel.supermarket_id == id)
     result = await db.execute(query)
     query_result = result.scalar_one_or_none()
-
-    # If no result is found, raise an HTTP 404 error
     if not query_result:
         raise HTTPException(status_code=404, detail=f"Supermarket with ID '{id}' not found.")
-
-    # Return the result mapped to the Pydantic model
     return Supermarket(
         id=query_result.supermarket_id,
         name=query_result.supermarket_name,
@@ -90,31 +62,6 @@ async def search_products(id: int, db: AsyncSession = Depends(get_db)):
 
 @router.delete("/delete/{supermarket_id}", response_model=dict)
 async def delete_supermarket(supermarket_id: int, db: AsyncSession = Depends(get_db)) -> dict:
-    '''
-    result = await db.execute(
-        select(SupermarketModel).where(Supermarket.id == supermarket_id)
-    )
-    supermarket = result.scalar_one_or_none()
-
-    if not supermarket:
-        raise HTTPException(status_code=404, detail=f"Supermarket with ID '{id}' not found.")
-
-    await db.delete(supermarket)
-    await db.commit()
-
-    return {"message": f"Supermarket with ID {supermarket_id} has been deleted."}
-    '''
-    '''
-    query_result = await db.get(SupermarketModel, supermarket_id)
-
-    if not query_result:
-        raise HTTPException(status_code=404, detail=f"User ID '{supermarket_id}' not found.")
-
-    await db.execute(delete(SupermarketModel).filter(SupermarketModel.supermarket_id == supermarket_id))
-    await db.commit()
-
-    return {"message":f"User with ID '{supermarket_id}'deleted from database successfully!"}
-    '''
     result = await db.execute(
         select(SupermarketModel).where(SupermarketModel.supermarket_id == supermarket_id)
     )
