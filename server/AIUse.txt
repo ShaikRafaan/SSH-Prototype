@@ -1,0 +1,2 @@
+This document tells about where we used AI.
+We used AI to make the hardcoded data and the CI/CD pipeline
