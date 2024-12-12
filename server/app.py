@@ -1,19 +1,25 @@
 from server.api import masterRouter
 from .database import setDataBase
 from fastapi import FastAPI, HTTPException
+from server.logging_config import setup_logging
 
-#Intialize API
+
+logger = setup_logging()
 app = FastAPI()
 
 app.include_router(masterRouter, tags=["App Routers"])
 
-#Setup the database on startup
 @app.on_event("startup")
 async def startEvent():
-    await setDataBase()
-    
+    try:
+        logger.info("Starting database setup...")
+        await setDataBase()
+        logger.info("Database setup completed successfully.")
+    except Exception as e:
+        logger.error(f"Error during database setup: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Database setup failed.")
 
-#Test router to validate startup
 @app.get('/getter')
 async def test():
+    logger.info("Test route called - Start-up validated.") 
     return {"output": "Start-up validated"}
