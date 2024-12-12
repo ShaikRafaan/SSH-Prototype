@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from typing import List
-from server.schemas.users import UserCreate, UserRead, UserUpdate
 from server.models.users import User
+from server.schemas.users import UserResponse as UserSchema
 from server.dependencies import get_db
 
 router = APIRouter()
@@ -94,3 +94,4 @@ async def delete_user(user_id: str, db: AsyncSession = Depends(get_db)) -> UserR
         last_name=user.second_name,
         email_id=user.email,
     )
+
