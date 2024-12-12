@@ -8,13 +8,16 @@ class ProductBase(BaseModel):
 
 class ProductCreate(BaseModel):
    
-    supermarket_id: str
+    supermarket_id: int
 
 class Product(BaseModel):
    
-    id: int
+    product_id: int
     name: str
     price: int
+    in_stock: str
+    supermarket_id: int
+
 
     class Config:
         orm_mode = True
