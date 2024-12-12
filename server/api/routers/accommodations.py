@@ -8,8 +8,8 @@ from server.dependencies import get_db
 
 router = APIRouter()
 @router.post("/add", response_model=AccommodationResponse)
-async def add_supermarket(supermarket: AccommodationResponse, db: AsyncSession = Depends(get_db)) -> AccommodationResponse:
-    result = await db.execute(select(Accommodation).filter_by(id=supermarket.id))
+async def add_accommodation(accommodation: AccommodationResponse, db: AsyncSession = Depends(get_db)) -> AccommodationResponse:
+    result = await db.execute(select(Accommodation).filter_by(id=accommodation.id))
     existing_supermarket = result.scalars().first()
     if existing_supermarket:
         raise HTTPException(
@@ -34,7 +34,7 @@ async def add_supermarket(supermarket: AccommodationResponse, db: AsyncSession =
 
 
 @router.get("/search/{accommodation_id}", response_model=AccommodationResponse)
-async def search_products(id: int, db: AsyncSession = Depends(get_db)):
+async def search_accommodation(id: int, db: AsyncSession = Depends(get_db)):
     query = select(Accommodation).where(Accommodation.accommodation_id == id)
     result = await db.execute(query)
     query_result = result.scalar_one_or_none()
@@ -48,7 +48,7 @@ async def search_products(id: int, db: AsyncSession = Depends(get_db)):
     )
 
 @router.get("/list", response_model=list[AccommodationResponse])
-async def list_supermarkets(db: AsyncSession = Depends(get_db)) -> List[AccommodationResponse]:
+async def list_accommodation(db: AsyncSession = Depends(get_db)) -> List[AccommodationResponse]:
     result = await db.execute(select(Accommodation))
     Acc = result.scalars().all()
     Accommodation_list=[
@@ -64,37 +64,39 @@ async def list_supermarkets(db: AsyncSession = Depends(get_db)) -> List[Accommod
 
 @router.put("/update/{accommodation_id}", response_model=AccommodationResponse)
 async def update_accommodation(
-    accommodation_id: int, 
-    updated_data: AccommodationUpdate, 
-    db: AsyncSession = Depends(get_db),
+    acc_id: int, 
+    updated_data: AccommodationResponse, 
+    db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(Accommodation).where(Accommodation.id == accommodation_id))
-    accommodation = result.scalars().first()
-    if not accommodation:
-        raise HTTPException(status_code=404, detail="Accommodation not found")
+    result = await db.execute(
+        select(Accommodation).where(Accommodation.accommodation_id == acc_id)
+    )
+    acc = result.scalar_one_or_none()
 
-    for field, value in updated_data.dict(exclude_unset=True).items():
-        setattr(accommodation, field, value)
-    
-    db.add(accommodation)
+    if not acc:
+        raise HTTPException(status_code=404, detail=f"Accommodation with ID '{acc_id}' not found.")
+
+    AccommodationResponse.address = updated_data.address
+    AccommodationResponse.city = updated_data.city
+    AccommodationResponse.contact_number=updated_data.contact_number
     await db.commit()
-    await db.refresh(accommodation)
-    return accommodation
-    """return AccommodationResponse(
-        id="1234",
-        name="John",
-        address="Myriad"
-    )"""
+    await db.refresh(acc)
+    return acc(
+        id=Accommodation.accommodation_id,
+        address=Accommodation.address,
+        city=Accommodation.city,
+        contact_number=Accommodation.contact_number
+    )
+
 
 @router.delete("/delete/{accommodation_id}", response_model=dict)
-async def delete_accommodation(
-    accommodation_id: int, db: AsyncSession = Depends(get_db)
-):
-    result = await db.execute(select(Accommodation).where(Accommodation.id == accommodation_id))
-    accommodation = result.scalars().first()
-    if not accommodation:
-        raise HTTPException(status_code=404, detail="Accommodation not found")
-
-    await db.delete(accommodation)
+async def delete_accommodation(accom_id: int, db: AsyncSession = Depends(get_db)) -> dict:
+    result = await db.execute(
+        select(Accommodation).where(Accommodation.accommodation_id == accom_id)
+    )
+    acc = result.scalar_one_or_none()
+    if not acc:
+        raise HTTPException(status_code=404, detail=f"Supermarket with ID '{accom_id}' not found.")
+    await db.delete(acc)
     await db.commit()
-    return {"detail": "Accommodation deleted successfully"}
+    return {"message": f"Supermarket with ID '{accom_id}' has been deleted successfully!"}
