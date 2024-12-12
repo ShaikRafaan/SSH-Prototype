@@ -1,63 +1,97 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from server.models.users import User
-from server.schemas.users import UserResponse as UserSchema
+from server.schemas.users import UserCreate,UserRead,UserUpdate
 from server.dependencies import get_db
 
 router = APIRouter()
 
-@router.get("/list", response_model=UserSchema)
-async def list_users() -> UserSchema:    
-    return UserSchema(
-        id= "12345",
-        firstname= "John",
-        lastname= "Doe",
-        email= "john.doe@example.com"
+@router.get("/all", response_model=List[UserRead])
+async def fetch_all_users(db: AsyncSession = Depends(get_db)) -> List[UserRead]:
+    query_result = await db.execute(select(User))
+    users = query_result.scalars().all()
+    return [
+        UserRead(
+            user_id=user.id,
+            first_name=user.first_name,
+            second_name=user.second_name,
+            email_id=user.email,
+            password=user.password,
+            accommodation_id=user.accommodation_id,
+        )
+        for user in users
+    ]
+
+@router.get("/{user_id}", response_model=UserRead)
+async def fetch_user(user_id: str, db: AsyncSession = Depends(get_db)) -> UserRead:
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail=f"User with ID '{user_id}' not found.")
+    return UserRead(
+        user_id=user.id,
+        first_name=user.first_name,
+        second_name=user.second_name,
+        email_id=user.email,
+        password=user.password,
+        accommodation_id=user.accommodation_id,
     )
 
-@router.post("/add", response_model=UserSchema)
-async def add_user(user: UserSchema, db: AsyncSession = Depends(get_db)) -> UserSchema:
+@router.post("/add", response_model=UserRead)
+async def add_user(user_data: UserCreate, db: AsyncSession = Depends(get_db)) -> UserRead:
+    existing_user = await db.get(User, user_data.user_id)
+    if existing_user:
+        raise HTTPException(status_code=409, detail=f"User with ID '{user_data.user_id}' already exists.")
 
-    return UserSchema(
-        id="new-id",
-        firstname= "new-fname",
-        lastname= "new-lname",
-        email= "new-email"
+    user = User(
+        first_name=existing_user.first_name,
+        second_name=existing_user.second_name,
+        email_id=existing_user.email,
+        password=existing_user.password,
+        accommodation_id=existing_user.accommodation_id,
+    )
+    db.add(user)
+    await db.commit()
+    return UserRead(
+        user_id=user.id,
+        first_name=user.first_name,
+        last_name=user.second_name,
+        email_id=user.email,
     )
 
+@router.put("/update/{user_id}", response_model=UserRead)
+async def update_user(user_id: str, user_data: UserUpdate, db: AsyncSession = Depends(get_db)) -> UserRead:
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail=f"User with ID '{user_id}' not found.")
 
-@router.get("/search/{id}", response_model=list[UserSchema])
-async def search_products(id: str, db: AsyncSession = Depends(get_db)):
-    if id == "12345":
-        return [UserSchema(id="12345", firstname="John", lastname="Doe", email="john.doe@example.com")]
-    else:
-        return []
+    user.first_name = user_data.firstname
+    user.second_name = user_data.secondname
+    user.email = user_data.email
+    user.password = user_data.password
+    
 
-@router.delete("/delete/{user_id}", response_model=dict)
-async def delete_user(user_id: str, db: AsyncSession = Depends(get_db)) -> dict:
+    await db.commit()
+    return UserRead(
+        user_id=user.id,
+        first_name=user.first_name,
+        last_name=user.second_name,
+        email_id=user.email,
+    )
 
-    if user_id == "12345":
-        return {"message": f"user with ID {user_id} has been deleted."}
-    else:
-        return {"message": f"user with ID {user_id} does not exist."}
+@router.delete("/delete/{user_id}", response_model=UserRead)
+async def delete_user(user_id: str, db: AsyncSession = Depends(get_db)) -> UserRead:
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail=f"User with ID '{user_id}' not found.")
 
+    await db.delete(user)
+    await db.commit()
+    return UserRead(
+        user_id=user.id,
+        first_name=user.first_name,
+        last_name=user.second_name,
+        email_id=user.email,
+    )
 
-@router.put("/update/{user_id}", response_model=UserSchema)
-async def update_user(
-    user_id: int,update_data: UserSchema,db: AsyncSession = Depends(get_db)) -> UserSchema:
-
-    if user_id == 12345:
-        return UserSchema(
-            id="12345",
-            firstname=update_data.firstname or "Updated Fname",
-            lastname=update_data.lastname or "Updated Lname",
-            email=update_data.email or "Updated email"
-        )
-    else:
-        return UserSchema(
-            id=str(user_id),
-            firstname="Non-existent user (for testing purposes)",
-            lastname="Non-existent user (for testing purposes)",
-            email="Non-existent user (for testing purposes)"
-        )

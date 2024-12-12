@@ -1,5 +1,14 @@
 from .database import LocalSession
-#Fetch a new database session for asynchronus database operations
+from server.logging_config import setup_logging 
+
+logger = setup_logging()
+
 async def get_db():
-    async with LocalSession() as database_session:
-        yield database_session
+    try:
+        logger.info("Fetching new database session...")
+        async with LocalSession() as database_session:
+            logger.info("Database session created successfully.")
+            yield database_session
+    except Exception as e:
+        logger.error("Error while creating database session.", exc_info=True)
+        raise

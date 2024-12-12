@@ -1,62 +1,40 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from server.models.product import Product
-from server.schemas.product_schema import Product as ProductSchema
+from server.models.product import Product as ProductModel
+from server.schemas.product_schema import Product, ProductCreate
 from server.dependencies import get_db
 from typing import List
 
 router = APIRouter()
 
-@router.get("/list", response_model=ProductSchema)
-async def list_products()->ProductSchema:
-    return ProductSchema(
-        id="12343",
-        supermarket_id="32432542"
-    )
-'''
-@router.get("/search", response_model=list[ProductSchema])
-async def search_products(query: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Product).where(Product.name.ilike(f"%{query}%")))
-    return result.scalars().all()
-'''
-hardcoded_products = [
-    {"id": 1, "name": "iphone", "price": 999},
-    {"id": 2, "name": "Samsung Galaxy S21", "price": 799},
-    {"id": 3, "name": "Google Pixel 6", "price": 599},
-    {"id": 4, "name": "OnePlus 9 Pro", "price": 1069},
-    {"id": 5, "name": "Apple MacBook Pro 16", "price": 2399},
-]
-@router.get("/search/{id}", response_model=ProductSchema)
-async def search_products(id: int) -> ProductSchema:
-    # Search for the product by id in the hardcoded list
-    #product = next((product for product in products if product["id"] == id), None)
-    hardcoded_products = [
-    {"id": 1, "name": "iphone", "price": 999},
-    {"id": 2, "name": "Samsung Galaxy S21", "price": 799},
-    {"id": 3, "name": "Google Pixel 6", "price": 599},
-    {"id": 4, "name": "OnePlus 9 Pro", "price": 1069},
-    {"id": 5, "name": "Apple MacBook Pro 16", "price": 2399},
+@router.get("/product_list", response_model=List[Product])
+async def list_product(db: AsyncSession = Depends(get_db)) -> List[Product]:
+    result = await db.execute(select(ProductModel))
+    products = result.scalars().all()
+    product_list=[
+        Product(
+            id=s.product_id,
+            name=s.product_name,
+            price=s.price,
+            in_stock=s.in_stock,
+            supermarket_id=s.supermarket_id
+        )
+        for s in products
     ]
-    flag = False
-    return_product = {}
-    count = 0
-    for product in hardcoded_products:
-        if product["id"] == id:
-            flag = True
-            return_product = hardcoded_products[count]
-        else:
-            count += 1
-    
-    if flag:
-        return ProductSchema(
-            id=return_product["id"],
-            name=return_product["name"],
-            price=return_product["price"]
-        )
-    else:
-        return ProductSchema(
-            id = 0000,
-            name = "null - product not found",
-            price=0000
-        )
+    return product_list
+
+@router.get("/search/{id}", response_model=Product)
+async def search_products(id: int, db: AsyncSession = Depends(get_db)):
+    query = select(ProductModel).where(ProductModel.id == id)
+    result = await db.execute(query)
+    query_result = result.scalar_one_or_none()
+    if not query_result:
+        raise HTTPException(status_code=404, detail=f"Product with ID '{id}' not found.")
+    return Product(
+        id=query_result.supermarket_id,
+        product_name=query_result.product_name,
+        price=query_result.price,
+        in_stock=query_result.in_stock
+
+    )
